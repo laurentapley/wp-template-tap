@@ -17,6 +17,11 @@ var gulp = require( 'gulp' ),
   del = require( 'del' ),
   package = require( './package.json' );
 
+  var options = {};
+  options.user = 'your-user-name';
+  options.port = Your MAMP port;
+  options.site_path = '~/your/site/path/here.php'; //this will point mamp to your local site
+
 // 1. paths
 // 3. environment
 // 2. config
@@ -34,7 +39,22 @@ var gulp = require( 'gulp' ),
 // clean
 // watch
 
-// CODE FOR CREATING MINIFIED DOCS FROM PHILL
+
+gulp.task('config', function(cb){
+    mamp(options, 'config', cb);
+});
+
+gulp.task('start', function(cb){
+    mamp(options, 'start', cb);
+});
+
+gulp.task('stop', function(cb){
+    mamp(options, 'stop', cb);
+});
+
+gulp.task('mamp', ['config', 'start']);
+
+// CODE FOR CREATING MINIFIED DOCS
 var paths = {
   // for our production server
   'local': {
@@ -127,16 +147,10 @@ var banner = [
  *
  */
 
-gulp.task( 'html', function() {
-  return gulp.src( currentEnv.src.html + '*.html' )
+gulp.task( 'php', function() {
+  return gulp.src( currentEnv.src.html + '*.php' )
     .pipe( gulp.dest( currentEnv.dist.html ) );
 } );
-// TODAY FIXING GULP WATCH SASS
-// gulp.task( 'sass', function() {
-//   gulp.src( './sass/**/*.scss' )
-//     .pipe( sass().on( 'error', sass.logError ) )
-//     .pipe( gulp.dest( currentEnv.dist.css ) );
-// } );
 
 // vendor css
 
@@ -227,14 +241,7 @@ gulp.task( 'fonts', () => {
 
 gulp.task( 'browser-sync', function() {
   browserSync.init( null, {
-    // startPath: '/app/index.html',
-    server: {
-      baseDir: "app",
-      routes: {
-        "/node_modules": "node_modules",
-        "/bower_components": "bower_components"
-      }
-    }
+    proxy: 'http://localhost:80'
   } );
 } );
 gulp.task( 'bs-reload', function() {
@@ -248,27 +255,18 @@ gulp.task( 'bs-reload', function() {
  */
 
 gulp.task( 'dist', () => {
-  runSequence( [ 'html', 'css', 'js', 'images', 'vendorFonts', 'compile-js-lib', 'compile-css-lib' ], 'browser-sync' );
+  runSequence( [ 'php', 'css', 'js', 'images', 'vendorFonts', 'compile-js-lib', 'compile-css-lib' ], 'browser-sync' );
   // globbing
   // matches any file with a .scss extension in dist/scss or a child directory
   gulp.watch( currentEnv.src.sass + '**/*.scss', [ 'css' ] );
   gulp.watch( currentEnv.src.js + '*.js', [ 'js' ] );
-  gulp.watch( currentEnv.src.html + '*.html', [ 'html', 'bs-reload' ] );
+  gulp.watch( currentEnv.src.html + '*.php', [ 'php', 'bs-reload' ] );
   gulp.watch( currentEnv.src.images + '**/**/*.{png,jpg,gif,svg,ico}', [ 'images' ] );
 } );
 
 // Synchronously delete the lib and dist folders with every gulp run
 gulp.task( 'clean', del.bind( null, [ 'app' ] ) );
 
-// // Clear caches off local system
-// gulp.task( 'cache:clear', function( callback ) {
-//   return cache.clearAll( callback )
-// } );
-
-// Cleaning up generated files automatically
-// gulp.task( 'clean:dist', function() {
-//   return del.sync( 'dist' );
-// } );
 
 gulp.task( 'default', [ 'clean' ], function() {
   gulp.start( 'dist' );
